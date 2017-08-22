@@ -1,10 +1,8 @@
 
 class CustomList:
-    FOUND = TrueH = 3  # the amount of items that is the needed amount for manual search
-
     def __init__(self):
         """ Constructor for creating the List object, the internal lists of keys and values is initialized"""
-        pass
+        self._list = []
 
     def search_element(self, key):
         """
@@ -15,7 +13,12 @@ class CustomList:
             value: The value of the found item
             steps: The steps needed for finding the key
         """
-        pass
+        steps = 0
+        for item in self._list:
+            steps += 1
+            if item["key"] == key:
+                return item["key"], item["value"], steps
+        return None, None, steps
 
     def add_element(self, key, value):
         """
@@ -24,7 +27,8 @@ class CustomList:
         :param value: The value corresponding to the key (can anything like objects/integers/strings)
         :return: Returns the amount of steps that is needed to add this element
         """
-        pass
+        self._list.append({"key":key, "value":value})
+        return 1
 
     def test(self, elements_amount=1000):
         """
@@ -34,9 +38,13 @@ class CustomList:
         """
         import time
 
-        steps_needed = 0
         items = []
+        values = {}
+
         start_time = time.time()
+        sub_start_time = time.time()
+        steps_needed = 0
+        sub_steps = 0
 
         # add all the requested elements to the list
         from string import ascii_letters, digits
@@ -45,28 +53,47 @@ class CustomList:
         key_length = 10
         for item in range(0, elements_amount):
             if item % (elements_amount/100) == 0:
-                print("filling {:,}/{:,}".format(item + (elements_amount/100), elements_amount))
+                print("filling {:,}/{:,} - {} {}".format(item + (elements_amount/100),
+                                                         elements_amount,
+                                                         time.time()-sub_start_time,
+                                                         sub_steps/(elements_amount/100)))
+                sub_start_time = time.time()
+                sub_steps = 0
             key = "".join(key_range[random.randrange(0, len(key_range))] for x in range(0, key_length))
+            values[key] = item
             items.append(key)
-            steps_needed += self.add_element(key, item)
+            steps = self.add_element(key, item)
+            steps_needed += steps
+            sub_steps += steps
 
         fill_time = time.time() - start_time
         fill_steps = steps_needed
         fill_avg_time = fill_time / elements_amount
         fill_avg_steps = fill_steps / elements_amount
+
         steps_needed = 0
         start_time = time.time()
+        sub_start_time = time.time()
+        sub_steps = 0
 
         print("\ndone filling! starting searching ...\n")
 
         # search all the elements in the list
         for item in range(0, elements_amount):
             if item % (elements_amount/100) == 0:
-                print("searching {:,}/{:,}".format(item + (elements_amount/100), elements_amount))
+                print("filling {:,}/{:,} - {} {}".format(item + (elements_amount/100),
+                                                         elements_amount,
+                                                         time.time()-sub_start_time,
+                                                         sub_steps/(elements_amount/100)))
+                sub_start_time = time.time()
+                sub_steps = 0
             key, value, steps = self.search_element(items[item])
             steps_needed += steps
+            sub_steps += steps
             if key != items[item]:
                 raise Exception("The found key: {} is not equal to searched key: {}".format(key, items[item]))
+            if value != values[key]:
+                raise Exception("The found value: {} is not equal to searched value: {} key: {}".format(values[key], value, key))
 
         search_time = time.time() - start_time
         search_steps = steps_needed
@@ -83,3 +110,7 @@ class CustomList:
         print("{:,} steps needed to search".format(search_steps))
         print("{} avg time needed to search".format(search_avg_time))
         print("{} avg steps needed to search".format(search_avg_steps))
+
+
+if __name__ == "__main__":
+    CustomList().test(1000 * 1000)
